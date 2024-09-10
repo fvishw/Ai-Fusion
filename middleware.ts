@@ -3,12 +3,24 @@ import {
   createRouteMatcher
 } from '@clerk/nextjs/server';
 
+const publicRoutes = [
+  '/',
+  '/about',
+  '/contact',
+  '/public(.*)', // Add your public routes here
+];
+
 const isProtectedRoute = createRouteMatcher([
   '/dashboard',
   '/forum(.*)',
 ]);
+
+const isPublicRoute = createRouteMatcher(publicRoutes);
+
 export default clerkMiddleware((auth, req) => {
-  if (isProtectedRoute(req)) auth().protect();
+  if (!isPublicRoute(req) && isProtectedRoute(req)) {
+    auth().protect();
+  }
 });
 
 export const config = {
