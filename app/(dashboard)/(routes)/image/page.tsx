@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 import { Heading } from "@/components/heading";
-import { MessageCircle } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formSchema } from "./constants";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +23,7 @@ interface GeminiMessage {
     text: string;
   };
 }
-const ConversationPage = () => {
+const ImagePage = () => {
   const router = useRouter();
 
   const [messages, setMessages] = useState<GeminiMessage[]>([]);
@@ -74,11 +74,11 @@ const ConversationPage = () => {
   return (
     <div>
       <Heading
-        title="Conversation"
-        discription="Our most advanced conversational model"
-        icon={MessageCircle}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500/10"
+        title="Image Generation"
+        discription="Turn your imagination into real images"
+        icon={ImageIcon}
+        iconColor="text-pink-700"
+        bgColor="bg-pink-700/10"
       />
       <div className="px-4 lg:px-8 ">
         <div>
@@ -147,4 +147,4 @@ const ConversationPage = () => {
   );
 };
 
-export default ConversationPage;
+export default ImagePage;
