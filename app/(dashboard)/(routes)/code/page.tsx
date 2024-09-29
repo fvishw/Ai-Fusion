@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 import { Heading } from "@/components/heading";
-import { MessageCircle } from "lucide-react";
+import { Code } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formSchema } from "./constants";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Markdown from "react-markdown";
 
 interface GeminiMessage {
   role: string;
@@ -22,7 +23,7 @@ interface GeminiMessage {
     text: string;
   };
 }
-const ConversationPage = () => {
+const CodePage = () => {
   const router = useRouter();
 
   const [messages, setMessages] = useState<GeminiMessage[]>([]);
@@ -47,7 +48,7 @@ const ConversationPage = () => {
       const newMessages = [...messages, userMessage];
 
       // Send the new messages array to the API
-      const response = await axios.post("/api/conversation", {
+      const response = await axios.post("/api/code", {
         messages: newMessages,
       });
 
@@ -73,11 +74,11 @@ const ConversationPage = () => {
   return (
     <div>
       <Heading
-        title="Conversation"
-        discription="Our most advanced conversational model"
-        icon={MessageCircle}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500/10"
+        title="Code Generation"
+        discription="generate code snippets using AI"
+        icon={Code}
+        iconColor="text-green-700"
+        bgColor="bg-green-700/10"
       />
       <div className="px-4 lg:px-8 ">
         <div>
@@ -94,7 +95,7 @@ const ConversationPage = () => {
                       <Input
                         className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
                         disabled={isLoading}
-                        placeholder="How do I calculate the radius of a circle"
+                        placeholder="Simple toggle button using html and css"
                         {...field}
                       />
                     </FormControl>
@@ -131,7 +132,17 @@ const ConversationPage = () => {
                 )}
               >
                 <p>
-                  {message.role === "user" ? "You" : "AI"}: {message.parts.text}
+                  {message.role === "user" ? "You" : "AI"}:
+                <Markdown components={{
+                    pre: ({ node, ...props }) => (
+                      <div className="overflow-auto w-full my-2 bg-black/10 p-2 rounded-lg">
+                        <pre {...props} />
+                      </div>
+                    ),
+                    code: ({ node, ...props }) => (
+                      <code className="bg-black/10 rounded-lg p-1" {...props} />
+                    )
+                  }} className="text-sm overflow-hidden leading-7">{message.parts.text || ""}</Markdown>
                 </p>
               </div>
             ))}
@@ -142,4 +153,4 @@ const ConversationPage = () => {
   );
 };
 
-export default ConversationPage;
+export default CodePage;
