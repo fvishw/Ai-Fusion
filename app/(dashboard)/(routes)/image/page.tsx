@@ -1,37 +1,42 @@
 "use client";
 
-import * as z from "zod";
-import { Heading } from "@/components/heading";
-import { ImageIcon } from "lucide-react";
+import React, { useState } from "react";
+import { DownloadIcon, ImageIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { formSchema } from "./constants";
+import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Empty } from "@/components/empty";
-import { Button } from "@/components/ui/button";
-import { Loader } from "@/components/loader";
-import { cn } from "@/lib/utils";
 import axios from "axios";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import Markdown from "react-markdown";
 
-interface GeminiMessage {
-  role: string;
-  parts: {
-    text: string;
-  };
-}
-const ImagePage = () => {
+import { Heading } from "@/components/heading";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Empty } from "@/components/empty";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Loader } from "@/components/loader";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardFooter } from "@/components/ui/card";
+
+import { aspectRatioOptions, formSchema } from "./constants";
+
+export default function ImagePage() {
   const router = useRouter();
-
-  const [messages, setMessages] = useState<GeminiMessage[]>([]);
+  const [images, setImages] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
+      go_fast: true,
+      num_outputs: 1,
+      aspect_ratio: "1:1",
     },
   });
 
@@ -39,35 +44,19 @@ const ImagePage = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const userMessage: GeminiMessage = {
-        role: "user",
-        parts: { text: values.prompt },
-      };
+      setImages([]);
 
-      // Add user message to messages array
-      const newMessages = [...messages, userMessage];
+      const response = await axios.post("/api/image", values);
+      const urls = response.data.map((image: { url: string }) => image.url);
 
-      // Send the new messages array to the API
-      const response = await axios.post("/api/conversation", {
-        messages: newMessages,
-      });
+      setImages(urls);
+      console.log(images);
 
-      // Ensure the response is in the correct format
-      const aiMessage: GeminiMessage = {
-        role: "ai",
-        parts: { text: response.data.parts.text }, // Assuming response.data has parts.text
-      };
-
-      // Update the messages state
-      setMessages((current) => [...current, userMessage, aiMessage]);
-
-      // Reset the form after submission
       form.reset();
     } catch (error: any) {
-      //Pro model require
-      console.log(error);
+      // Handle error cases appropriately
     } finally {
-      router.refresh(); // Optionally refresh the page if necessary
+      router.refresh();
     }
   };
 
@@ -75,76 +64,128 @@ const ImagePage = () => {
     <div>
       <Heading
         title="Image Generation"
-        discription="Turn your imagination into real images"
+        discription="Turn your prompt into an Image."
         icon={ImageIcon}
         iconColor="text-pink-700"
         bgColor="bg-pink-700/10"
       />
-      <div className="px-4 lg:px-8 ">
+      <div className="px-4 lg:px-8">
         <div>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="rounded-lg border w-full  p-4 px-3 md:px-6 focus-within:shadow-sm grid grid-cols-12 gap-2"
+              className="rounded-lg border w-full p-4 px-3 md:px-6 focus-within:shadow-sm grid grid-cols-12 gap-2"
             >
               <FormField
                 name="prompt"
                 render={({ field }) => (
-                  <FormItem className="col-span-12 lg:col-span-10">
-                    <FormControl className="m-0 p-0">
+                  <FormItem className="col-span-12">
+                    <FormControl>
                       <Input
-                        className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
                         disabled={isLoading}
-                        placeholder="How do I calculate the radius of a circle"
+                        placeholder="A picture of a horse in Swiss alps"
+                        className="pl-2 border-0 outline-none focus-visible:ring-0 focus-visible: ring-transparent"
                         {...field}
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
-              <Button
-                className="col-span-12 lg:col-span-2 w-full"
-                disabled={isLoading}
-              >
-                Generate
-              </Button>
+              <FormField
+                name="go_fast"
+                render={({ field }) => (
+                  <FormItem className="col-span-12 lg:col-span-3">
+                    <FormControl>
+                      <div className="flex items-center">
+                        <Input
+                          type="checkbox"
+                          disabled={isLoading}
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="mr-2"
+                        />
+                        <label htmlFor="go_fast">Go Fast</label>
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="num_outputs"
+                render={({ field }) => (
+                  <FormItem className="col-span-12 lg:col-span-3">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        disabled={isLoading}
+                        min="1"
+                        max="4"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="aspect_ratio"
+                render={({ field }) => (
+                  <FormItem className="col-span-12 lg:col-span-6">
+                    <FormControl>
+                      <Select
+                        disabled={isLoading}
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select aspect ratio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {aspectRatioOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <div className="col-span-12 flex justify-end">
+                <Button type="submit" disabled={isLoading}>
+                  Generate
+                </Button>
+              </div>
             </form>
           </Form>
         </div>
-        <div className="space-y-4 mt-4">
-          {isLoading && (
-            <div className="p-8 rounded-lg w-full flex items-center justify-center bg-muted">
-              <Loader />
-            </div>
+        <div className="mt-4">
+          {isLoading && <Loader />}
+          {!isLoading && images.length === 0 && (
+            <Empty label={"No Images generated"} />
           )}
-          {messages.length === 0 && !isLoading && (
-            <Empty label="No conversation started." />
-          )}
-          <div className="flex flex-col-reverse gap-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "p-8 w-full items-start gap-x-8 rounded-lg",
-                  message.role === "user"
-                    ? "bg-white border border-black/10"
-                    : "bg-muted"
-                )}
-              >
-                <p>
-
-                  {message.role === "user" ? "You" : "AI"}:
-                  <Markdown>
-                    {message.parts.text}
-                  </Markdown>
-                </p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {images.map((src) => (
+              <Card key={src} className="overflow-hidden">
+                <div className="relative aspect-square">
+                  <Image alt="Generated" src={src} fill objectFit="cover" />
+                  {src}
+                </div>
+                <CardFooter className="p-2">
+                  <Button
+                    onClick={() => window.open(src)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <DownloadIcon className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </CardFooter>
+              </Card>
             ))}
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default ImagePage;
+}

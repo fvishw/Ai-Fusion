@@ -16,6 +16,8 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Markdown from "react-markdown";
+import { UserAvatar } from "@/components/user-avatar";
+import { BotAvatar } from "@/components/bot-avatar";
 
 interface GeminiMessage {
   role: string;
@@ -132,8 +134,7 @@ const ConversationPage = () => {
                 )}
               >
                 <p>
-
-                  {message.role === "user" ? "You" : "AI"}:
+                {message.role === "user" ? <UserAvatar /> : <BotAvatar />}
                   <Markdown>
                     {message.parts.text}
                   </Markdown>

@@ -2,58 +2,38 @@ import * as z from "zod";
 
 export const formSchema = z.object({
   prompt: z.string().min(1, {
-    message: "Image Prompt is required",
+    message: "Prompt is required",
   }),
-  ammount: z.number().int().min(1),
-  resolution: z.string().min(1)
+  go_fast: z.boolean().default(true),
+  num_outputs: z.number().int().min(1).max(4).default(1),
+  aspect_ratio: z
+    .enum([
+      "1:1",
+      "16:9",
+      "21:9",
+      "3:2",
+      "2:3",
+      "4:5",
+      "5:4",
+      "3:4",
+      "4:3",
+      "9:16",
+      "9:21",
+    ])
+    .default("1:1"),
 });
-export const ammountOptions = [{
-    label: "1 photo",
-    value: 1
-    }, {
-    label: "2 photos",
-    value: 2
-    }, {
-    label: "3 photos",
-    value: 3
-    }, {
-    label: "4 photos",
-    value: 4
-    }, {
-    label: "5 photos",
-    value: 5
-    }, {
-    label: "6 photos",
-    value: 6
-    }, {
-    label: "7 photos",
-    value: 7
-    }, {
-    label: "8 photos",
-    value: 8
-    }, {
-    label: "9 photos",
-    value: 9
-    }, {
-    label: "1 photos0",
-    value: 10
-    }];
-export const resolutionOptions = [{
-    label: "256x256",
-    value: "256x256"
-    }, {
-    label: "512x512",
-    value: "512x512"
-    }, {
-    label: "1024x1024",
-    value: "1024x1024"
-    }, {
-    label: "1280x720",
-    value: "1280x720"
-    }, {
-    label: "1920x1080",
-    value: "1920x1080"
-    }, {
-    label: "3840x2160",
-    value: "3840x2160"
-}];
+
+// Example options for enum fields if needed
+export const aspectRatioOptions = [
+  { label: "1:1", value: "1:1" },
+  { label: "16:9", value: "16:9" },
+  { label: "21:9", value: "21:9" },
+  { label: "3:2", value: "3:2" },
+  { label: "2:3", value: "2:3" },
+  { label: "4:5", value: "4:5" },
+  { label: "5:4", value: "5:4" },
+  { label: "3:4", value: "3:4" },
+  { label: "4:3", value: "4:3" },
+  { label: "9:16", value: "9:16" },
+  { label: "9:21", value: "9:21" },
+];
