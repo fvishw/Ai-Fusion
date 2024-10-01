@@ -5,7 +5,10 @@ export const formSchema = z.object({
     message: "Prompt is required",
   }),
   go_fast: z.boolean().default(true),
-  num_outputs: z.number().int().min(1).max(4).default(1),
+  num_outputs: z.preprocess((a) => {
+    const parsed = parseInt(a as string, 10);
+    return isNaN(parsed) ? undefined : parsed;
+  }, z.number().int().min(1).max(4)),
   aspect_ratio: z
     .enum([
       "1:1",

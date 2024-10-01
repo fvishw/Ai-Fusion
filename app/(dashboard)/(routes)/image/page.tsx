@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
+import { toast } from "react-toastify";
 import { Heading } from "@/components/heading";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -45,16 +45,15 @@ export default function ImagePage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setImages([]);
-
+      console.log("Printing Response!");
       const response = await axios.post("/api/image", values);
-      const urls = response.data.map((image: { url: string }) => image.url);
-
+      let urls = await response.data.images;
       setImages(urls);
-      console.log(images);
 
       form.reset();
     } catch (error: any) {
       // Handle error cases appropriately
+      console.error(error);
     } finally {
       router.refresh();
     }
@@ -165,11 +164,16 @@ export default function ImagePage() {
             <Empty label={"No Images generated"} />
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {images.map((src) => (
-              <Card key={src} className="overflow-hidden">
+            {images.map((src, index) => (
+              <Card key={`${src}-${index}`} className="overflow-hidden">
                 <div className="relative aspect-square">
-                  <Image alt="Generated" src={src} fill objectFit="cover" />
-                  {src}
+                  <Image
+                    alt={`Generated Image ${index + 1}`}
+                    src={src}
+                    fill={true}
+                    objectFit="cover"
+                    className="object-cover"
+                  />
                 </div>
                 <CardFooter className="p-2">
                   <Button
