@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 import { Heading } from "@/components/heading";
-import { MessageCircle } from "lucide-react";
+import { Video } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formSchema } from "./constants";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,23 +15,17 @@ import { cn } from "@/lib/utils";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Markdown from "react-markdown";
 
-interface GeminiMessage {
-  role: string;
-  parts: {
-    text: string;
-  };
-}
-const ConversationPage = () => {
+const VideoPage = () => {
   const router = useRouter();
 
-  const [messages, setMessages] = useState<GeminiMessage[]>([]);
+  const [video, setVideo] = useState<string>("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
+      duration: 1,
     },
   });
 
@@ -39,27 +33,12 @@ const ConversationPage = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const userMessage: GeminiMessage = {
-        role: "user",
-        parts: { text: values.prompt },
-      };
-
-      // Add user message to messages array
-      const newMessages = [...messages, userMessage];
-
+      setVideo("");
       // Send the new messages array to the API
-      const response = await axios.post("/api/conversation", {
-        messages: newMessages,
-      });
-
+      const response = await axios.post("/api/video", values);
+      console.log(response.data.video);
       // Ensure the response is in the correct format
-      const aiMessage: GeminiMessage = {
-        role: "ai",
-        parts: { text: response.data.parts.text }, // Assuming response.data has parts.text
-      };
-
-      // Update the messages state
-      setMessages((current) => [...current, userMessage, aiMessage]);
+      setVideo(response.data.video);
 
       // Reset the form after submission
       form.reset();
@@ -74,11 +53,11 @@ const ConversationPage = () => {
   return (
     <div>
       <Heading
-        title="Conversation"
-        discription="Our most advanced conversational model"
-        icon={MessageCircle}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500/10"
+        title="Video Generation"
+        discription="Turn your prompt into video"
+        icon={Video}
+        iconColor="text-orange-700"
+        bgColor="bg-orange-700/10"
       />
       <div className="px-4 lg:px-8 ">
         <div>
@@ -95,7 +74,7 @@ const ConversationPage = () => {
                       <Input
                         className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
                         disabled={isLoading}
-                        placeholder="How do I calculate the radius of a circle"
+                        placeholder="elephant running on clouds"
                         {...field}
                       />
                     </FormControl>
@@ -117,29 +96,18 @@ const ConversationPage = () => {
               <Loader />
             </div>
           )}
-          {messages.length === 0 && !isLoading && (
-            <Empty label="No conversation started." />
+          {video.length === 0 && !isLoading && (
+            <Empty label="No video Generated." />
           )}
           <div className="flex flex-col-reverse gap-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "p-8 w-full items-start gap-x-8 rounded-lg",
-                  message.role === "user"
-                    ? "bg-white border border-black/10"
-                    : "bg-muted"
-                )}
+            {video && (
+              <video
+                controls
+                className="w-full aspect-video rounded-lg border bg-black my-8"
               >
-                <p>
-
-                  {message.role === "user" ? "You" : "AI"}:
-                  <Markdown>
-                    {message.parts.text}
-                  </Markdown>
-                </p>
-              </div>
-            ))}
+                <source src={video} />
+              </video>
+            )}
           </div>
         </div>
       </div>
@@ -147,4 +115,4 @@ const ConversationPage = () => {
   );
 };
 
-export default ConversationPage;
+export default VideoPage;

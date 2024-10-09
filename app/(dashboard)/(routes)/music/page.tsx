@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 import { Heading } from "@/components/heading";
-import { MessageCircle } from "lucide-react";
+import { Music } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formSchema } from "./constants";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,21 +17,16 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Markdown from "react-markdown";
 
-interface GeminiMessage {
-  role: string;
-  parts: {
-    text: string;
-  };
-}
-const ConversationPage = () => {
+const MusicPage = () => {
   const router = useRouter();
 
-  const [messages, setMessages] = useState<GeminiMessage[]>([]);
+  const [music, setMusic] = useState<string>("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
+      duration: 1,
     },
   });
 
@@ -39,27 +34,12 @@ const ConversationPage = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const userMessage: GeminiMessage = {
-        role: "user",
-        parts: { text: values.prompt },
-      };
-
-      // Add user message to messages array
-      const newMessages = [...messages, userMessage];
-
+      setMusic("");
       // Send the new messages array to the API
-      const response = await axios.post("/api/conversation", {
-        messages: newMessages,
-      });
-
+      const response = await axios.post("/api/music", values);
+      console.log(response.data.music);
       // Ensure the response is in the correct format
-      const aiMessage: GeminiMessage = {
-        role: "ai",
-        parts: { text: response.data.parts.text }, // Assuming response.data has parts.text
-      };
-
-      // Update the messages state
-      setMessages((current) => [...current, userMessage, aiMessage]);
+      setMusic(response.data.music);
 
       // Reset the form after submission
       form.reset();
@@ -74,11 +54,11 @@ const ConversationPage = () => {
   return (
     <div>
       <Heading
-        title="Conversation"
-        discription="Our most advanced conversational model"
-        icon={MessageCircle}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500/10"
+        title="Music Generation"
+        discription="Turn your prompt into music"
+        icon={Music}
+        iconColor="text-emerald-500"
+        bgColor="bg-emerald-500/10"
       />
       <div className="px-4 lg:px-8 ">
         <div>
@@ -102,6 +82,21 @@ const ConversationPage = () => {
                   </FormItem>
                 )}
               />
+              <FormField
+                name="duration"
+                render={({ field }) => (
+                  <FormItem className="col-span-12 lg:col-span-3">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        disabled={isLoading}
+                        min="1"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
               <Button
                 className="col-span-12 lg:col-span-2 w-full"
                 disabled={isLoading}
@@ -117,11 +112,11 @@ const ConversationPage = () => {
               <Loader />
             </div>
           )}
-          {messages.length === 0 && !isLoading && (
-            <Empty label="No conversation started." />
+          {music.length === 0 && !isLoading && (
+            <Empty label="No Music Generated." />
           )}
           <div className="flex flex-col-reverse gap-y-4">
-            {messages.map((message, index) => (
+            {/* {messages.map((message, index) => (
               <div
                 key={index}
                 className={cn(
@@ -132,14 +127,16 @@ const ConversationPage = () => {
                 )}
               >
                 <p>
-
                   {message.role === "user" ? "You" : "AI"}:
-                  <Markdown>
-                    {message.parts.text}
-                  </Markdown>
+                  <Markdown>{message.parts.text}</Markdown>
                 </p>
               </div>
-            ))}
+            ))} */}
+            {music && (
+              <audio controls className="w-full mt-8">
+                <source src={music} />
+              </audio>
+            )}
           </div>
         </div>
       </div>
@@ -147,4 +144,4 @@ const ConversationPage = () => {
   );
 };
 
-export default ConversationPage;
+export default MusicPage;

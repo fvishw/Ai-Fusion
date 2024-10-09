@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { checkApiLimit, increaseApiLimit } from "@/lib/api-limit";
 
-// Initialize Replicate with the API token
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
@@ -13,7 +12,7 @@ export async function POST(req: Request) {
     const { userId } = auth();
     const body = await req.json();
     // console.log(body);
-    const { prompt, go_fast, num_outputs, aspect_ratio } = body;
+    const { prompt } = body;
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -22,33 +21,30 @@ export async function POST(req: Request) {
     if (!prompt) {
       return new NextResponse("Prompt is required", { status: 400 });
     }
+    // console.log(prompt);
     const freeTraial = await checkApiLimit();
     if (!freeTraial) {
       return new NextResponse("Free trial expired", { status: 403 });
     }
 
     // Use the run method directly to interact with the model
-    const output = await replicate.run("black-forest-labs/flux-schnell", {
-      input: {
-        prompt,
-        go_fast, // Ensure these parameters are valid for your model
-        num_outputs,
-        aspect_ratio,
-        output_format: "jpg",
-      },
-    });
-
-    if (!Array.isArray(output)) {
-      console.error("Unexpected output format from Replicate:", output);
-      return new NextResponse("Unexpected output format", { status: 500 });
-    }
+    const output = await replicate.run(
+      "cjwbw/damo-text-to-video:1e205ea73084bd17a0a3b43396e49ba0d6bc2e754e9283b2df49fad2dcf95755",
+      {
+        input: {
+          prompt,
+          num_frames: 50,
+        },
+      }
+    );
 
     // Optionally, validate that each item in the array is a string URL
-    console.log(NextResponse.json({ images: output }));
+    console.log(output);
     await increaseApiLimit();
-    return NextResponse.json({ images: output });
+
+    return NextResponse.json({ video: output });
   } catch (error) {
-    console.log("[IMAGE_GENERATION_ERROR]", error);
+    console.log("[VIDEO_GENERATION_ERROR]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
